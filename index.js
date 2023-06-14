@@ -48,6 +48,7 @@ async function run() {
 
     const course = client.db("summercamp").collection("courses");
     const userCollection = client.db("summercamp").collection("users");
+    const myclasses = client.db("summercamp").collection("myclasses");
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -107,6 +108,64 @@ app.post("/stripe/charge", cors(), async (req, res) => {
   }
 });
 /////////////////
+//myclasses
+ app.post("/myclasses", async (req, res) => {
+  const additem = req.body;
+
+  try {
+    const existingDocument = await myclasses.findOne({ "courseId": additem.courseId });
+    
+    if (existingDocument) {
+      // Document with the same _id already exists
+      return res.status(409).send("This class has already been added.");
+    }
+
+    const result = await myclasses.insertOne(additem);
+    res.send(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred while saving the form data.");
+  }
+});
+
+
+
+app.get("/myclasses/:email", async (req, res) => {
+  const email = req.params.email;
+
+  try {
+    const result = await myclasses.find({ email: email }).toArray();
+
+    if (result.length > 0) {
+      res.status(200).send(result);
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred while retrieving the user" });
+  }
+});
+
+
+
+app.get("/myclass/:id", async (req, res) => {
+  const courseId = req.params.id;
+
+  try {
+    const result = await myclasses.findOne({ _id: new ObjectId(courseId) });
+
+    if (result) {
+      res.status(200).json(result);
+    } else {
+      res.status(404).json({ message: "Course not found" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred while retrieving the course" });
+  }
+});
+//////
 
 app.get("/users/:email", async (req, res) => {
   const email = req.params.email;

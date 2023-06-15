@@ -3,7 +3,6 @@ const app = express();
 const bodyParser = require("body-parser");
 const { ObjectId } = require("mongodb");
 const cors = require("cors");
-const port = process.env.PORT || 3000;
 const jwt = require("jsonwebtoken");
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_TEST);
@@ -30,6 +29,7 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri =
   "mongodb+srv://ass12:DfkwzAjJkpP0OXyr@cluster0.l8qsm1e.mongodb.net/?retryWrites=true&w=majority";
@@ -65,7 +65,6 @@ async function run() {
         });
 
         if (existingDocument) {
-  
           return res.status(409).send("This class has already been added.");
         }
 
@@ -76,12 +75,6 @@ async function run() {
         res.status(500).send("An error occurred while saving the form data.");
       }
     });
-
-
-
-
-
-
 
     app.get("/myclasses/:email", async (req, res) => {
       const email = req.params.email;
@@ -96,9 +89,7 @@ async function run() {
         }
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while retrieving the user" });
+        res.status(500).end();
       }
     });
 
@@ -115,11 +106,10 @@ async function run() {
         }
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while retrieving the course" });
+        res.status(500).end();
       }
     });
+
     app.post("/myclass/:id", async (req, res) => {
       const courseId = req.params.id;
       const { paymentStatus } = req.body;
@@ -127,7 +117,7 @@ async function run() {
       try {
         const result = await myclasses.updateOne(
           { _id: new ObjectId(courseId) },
-          { $set: { ok: paymentStatus } },
+          { $set: { ok: paymentStatus } }
         );
 
         if (result.modifiedCount === 1) {
@@ -139,15 +129,9 @@ async function run() {
         }
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({
-            message: "An error occurred while updating the payment status",
-          });
+        res.status(500).end();
       }
     });
-
-
 
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -162,17 +146,17 @@ async function run() {
         }
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while retrieving the user" });
+        res.status(500).end();
       }
     });
 
-   app.delete("/userdel/:id", async (req, res) => {
+    app.delete("/userdel/:id", async (req, res) => {
       const courseId = req.params.id;
 
       try {
-        const result = await userCollection.deleteOne({ _id: new ObjectId(courseId) });
+        const result = await userCollection.deleteOne({
+          _id: new ObjectId(courseId),
+        });
 
         if (result.deletedCount === 1) {
           res.status(200).json({ message: "Course deleted successfully" });
@@ -181,31 +165,28 @@ async function run() {
         }
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while deleting the course" });
+        res.status(500).end();
       }
     });
 
+    app.get("/use/faculty", async (req, res) => {
+      try {
+        const result = await userCollection
+          .find({ role: "faculty" })
+          .toArray();
 
-
-
-app.get("/use/faculty", async (req, res) => {
-  try {
-    const result = await userCollection.find({ role: "faculty" }).toArray();
-
-    if (result.length > 0) {
-      res.status(200).json(result);
-    } else {
-      res.status(404).json({ message: "No users found with the role 'faculty'" });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "An error occurred while retrieving the data" });
-  }
-});
-
-
+        if (result.length > 0) {
+          res.status(200).json(result);
+        } else {
+          res
+            .status(404)
+            .json({ message: "No users found with the role 'faculty'" });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).end();
+      }
+    });
 
     app.get("/users", async (req, res) => {
       const showuser = await userCollection.find().toArray();
@@ -214,37 +195,34 @@ app.get("/use/faculty", async (req, res) => {
 
     app.patch("/userall/:id", async (req, res) => {
       const id = req.params.id;
-    const { role } = req.body;
+      const { role } = req.body;
       const query = { _id: new ObjectId(id) };
       const updatedDoc = {
         $set: {
-           role: role || "",
+          role: role || "",
         },
       };
       const result = await userCollection.updateOne(query, updatedDoc);
       res.send(result);
     });
 
-
-
-    app.post('/users', async(req,res) => {
-        const user = req.body;
-        const query = {email: user.email};
-        const existingUser = await userCollection.findOne(query);
-        if(existingUser){
-            return res.send({message: 'User Already Exists'})
-        }
-        const result = await userCollection.insertOne(user);
-        res.send(result)
-    })
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "User Already Exists" });
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
 
     app.get("/courses", async (req, res) => {
       const showuser = await course.find().toArray();
       res.send(showuser);
     });
 
-
- app.get("/course/:email", async (req, res) => {
+    app.get("/course/:email", async (req, res) => {
       const email = req.params.email;
 
       try {
@@ -257,11 +235,10 @@ app.get("/use/faculty", async (req, res) => {
         }
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while retrieving the user" });
+        res.status(500).end();
       }
     });
+
     app.post("/coursesadd", async (req, res) => {
       const additem = req.body;
 
@@ -270,7 +247,7 @@ app.get("/use/faculty", async (req, res) => {
         res.send(result);
       } catch (error) {
         console.error(error);
-        res.status(500).send("An error occurred while saving the form data.");
+        res.status(500).end();
       }
     });
 
@@ -278,7 +255,9 @@ app.get("/use/faculty", async (req, res) => {
       const courseId = req.params.id;
 
       try {
-        const result = await course.deleteOne({ _id: new ObjectId(courseId) });
+        const result = await course.deleteOne({
+          _id: new ObjectId(courseId),
+        });
 
         if (result.deletedCount === 1) {
           res.status(200).json({ message: "Course deleted successfully" });
@@ -287,21 +266,20 @@ app.get("/use/faculty", async (req, res) => {
         }
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while deleting the course" });
+        res.status(500).end();
       }
     });
+
     app.put("/courses/:id", async (req, res) => {
       const courseId = req.params.id;
       const updateData = req.body;
-      const { _id, ...updatedFields } = updateData; 
+      const { _id, ...updatedFields } = updateData;
 
       try {
         const result = await course.findOneAndUpdate(
           { _id: new ObjectId(courseId) },
           { $set: updatedFields },
-          { returnOriginal: false },
+          { returnOriginal: false }
         );
 
         if (result) {
@@ -313,39 +291,17 @@ app.get("/use/faculty", async (req, res) => {
         }
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while updating the course" });
+        res.status(500).end();
       }
     });
-    app.put("/courses/:id", async (req, res) => {
-      const courseId = req.params.id;
-      const updateData = req.body;
-      delete updateData._id; 
 
-      try {
-        const result = await course.updateOne(
-          { _id: new ObjectId(courseId) },
-          { $set: updateData },
-        );
-
-        if (result.modifiedCount === 1) {
-          res.status(200).json({ message: "Course updated successfully" });
-        } else {
-          res.status(404).json({ message: "Course not found" });
-        }
-      } catch (error) {
-        console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while updating the course" });
-      }
-    });
     app.get("/courses/:id", async (req, res) => {
       const courseId = req.params.id;
 
       try {
-        const result = await course.findOne({ _id: new ObjectId(courseId) });
+        const result = await course.findOne({
+          _id: new ObjectId(courseId),
+        });
 
         if (result) {
           res.status(200).json(result);
@@ -354,28 +310,15 @@ app.get("/use/faculty", async (req, res) => {
         }
       } catch (error) {
         console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while retrieving the course" });
+        res.status(500).end();
       }
     });
 
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!",
-    );
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
-  }
-}
+    app.get("/", (req, res) => {
+      res.send("red horse is running");
+    });
 
-run().catch(console.dir);
+    app.listen(port, () => {
+      console.log(`Server is running on port: ${port}`);
+    });
 
-app.get("/", (req, res) => {
-  res.send("red horse is running");
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
-});

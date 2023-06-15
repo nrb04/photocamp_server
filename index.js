@@ -56,146 +56,293 @@ async function run() {
       res.send({ token });
     });
 
-    const verifyAdmin = async (req, res, next) => {
-      const email = req.user.email;
-      const query = { email: email };
-      const user = await userCollection.findOne(query);
-      if (user.role !== "admin") {
-        return res
-          .status(403)
-          .send({ error: true, message: "Forbiddenn access" });
+//    const verifyAdmin = async (req, res, next) => {
+//      const email = req.user.email;
+//      const query = { email: email };
+//      const user = await userCollection.findOne(query);
+//      if (user.role !== "admin") {
+//        return res
+//          .status(403)
+//          .send({ error: true, message: "Forbiddenn access" });
+//      }
+//      next();
+//    };
+//    const verifyfaculty = async (req, res, next) => {
+//      const email = req.user.email;
+//      const query = { email: email };
+//      const user = await userCollection.findOne(query);
+//      if (user.role !== "faculty") {
+//        return res
+//          .status(403)
+//          .send({ error: true, message: "Forbidden access" });
+//      }
+//      next();
+//    };
+
+    //user email all data
+
+//    //payment
+//    app.post("/stripe/charge", cors(), async (req, res) => {
+//      console.log("stripe-routes.js 9 | route reached", req.body);
+//      let { amount, id } = req.body;
+//      console.log("stripe-routes.js 10 | amount and id", amount, id);
+//      try {
+//        const payment = await stripe.paymentIntents.create({
+//          amount: amount,
+//          currency: "USD",
+//          description: "Your Company Description",
+//          payment_method: id,
+//          confirm: true,
+//        });
+//        console.log("stripe-routes.js 19 | payment", payment);
+//        res.json({
+//          message: "Payment Successful",
+//          success: true,
+//        });
+//      } catch (error) {
+//        console.log("stripe-routes.js 17 | error", error);
+//        res.json({
+//          message: "Payment Failed",
+//          success: false,
+//        });
+//      }
+//    });
+    /////////////////
+    //myclasses
+    app.post("/myclasses", async (req, res) => {
+      const additem = req.body;
+
+      try {
+        const existingDocument = await myclasses.findOne({
+          courseId: additem.courseId,
+        });
+
+        if (existingDocument) {
+          // Document with the same _id already exists
+          return res.status(409).send("This class has already been added.");
+        }
+
+        const result = await myclasses.insertOne(additem);
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send("An error occurred while saving the form data.");
       }
-      next();
-    };
-    const verifyfaculty = async (req, res, next) => {
-      const email = req.user.email;
-      const query = { email: email };
-      const user = await userCollection.findOne(query);
-      if (user.role !== "faculty") {
-        return res
-          .status(403)
-          .send({ error: true, message: "Forbidden access" });
+    });
+
+
+
+
+
+
+
+    app.get("/myclasses/:email", async (req, res) => {
+      const email = req.params.email;
+
+      try {
+        const result = await myclasses.find({ email: email }).toArray();
+
+        if (result.length > 0) {
+          res.status(200).send(result);
+        } else {
+          res.status(404).json({ message: "User not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ message: "An error occurred while retrieving the user" });
       }
-      next();
-    };
- 
-//user email all data
-
-//payment
-app.post("/stripe/charge", cors(), async (req, res) => {
-  console.log("stripe-routes.js 9 | route reached", req.body);
-  let { amount, id } = req.body;
-  console.log("stripe-routes.js 10 | amount and id", amount, id);
-  try {
-    const payment = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: "USD",
-      description: "Your Company Description",
-      payment_method: id,
-      confirm: true,
     });
-    console.log("stripe-routes.js 19 | payment", payment);
-    res.json({
-      message: "Payment Successful",
-      success: true,
+
+    app.get("/myclass/:id", async (req, res) => {
+      const courseId = req.params.id;
+
+      try {
+        const result = await myclasses.findOne({ _id: new ObjectId(courseId) });
+
+        if (result) {
+          res.status(200).json(result);
+        } else {
+          res.status(404).json({ message: "Course not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ message: "An error occurred while retrieving the course" });
+      }
     });
-  } catch (error) {
-    console.log("stripe-routes.js 17 | error", error);
-    res.json({
-      message: "Payment Failed",
-      success: false,
+    app.post("/myclass/:id", async (req, res) => {
+      const courseId = req.params.id;
+      const { paymentStatus } = req.body;
+
+      try {
+        const result = await myclasses.updateOne(
+          { _id: new ObjectId(courseId) },
+          { $set: { ok: paymentStatus } },
+        );
+
+        if (result.modifiedCount === 1) {
+          res
+            .status(200)
+            .json({ message: "Payment status updated successfully" });
+        } else {
+          res.status(404).json({ message: "Course not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({
+            message: "An error occurred while updating the payment status",
+          });
+      }
     });
-  }
-});
-/////////////////
-//myclasses
- app.post("/myclasses", async (req, res) => {
-  const additem = req.body;
 
+//    app.put("/myclass/:id", async (req, res) => {
+//      const courseId = req.params.id;
+//      const { payment } = req.body;
+//
+//      try {
+//        const result = await myclasses.updateOne(
+//          { _id: new ObjectId(courseId) },
+//          {
+//            $set: {
+//              payment: payment,
+//            },
+//          },
+//        );
+//
+//        if (result.modifiedCount === 1) {
+//          res
+//            .status(200)
+//            .json({ message: "Payment status updated successfully" });
+//        } else {
+//          res.status(404).json({ message: "Course not found" });
+//        }
+//      } catch (error) {
+//        console.error(error);
+//        res.status(500).json({
+//          message: "An error occurred while updating the payment status",
+//        });
+//      }
+//    });
+
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+
+      try {
+        const result = await userCollection.findOne({ email: email });
+
+        if (result) {
+          res.status(200).json(result);
+        } else {
+          res.status(404).json({ message: "User not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ message: "An error occurred while retrieving the user" });
+      }
+    });
+
+
+
+
+app.get("/use/faculty", async (req, res) => {
   try {
-    const existingDocument = await myclasses.findOne({ "courseId": additem.courseId });
-    
-    if (existingDocument) {
-      // Document with the same _id already exists
-      return res.status(409).send("This class has already been added.");
-    }
-
-    const result = await myclasses.insertOne(additem);
-    res.send(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("An error occurred while saving the form data.");
-  }
-});
-
-
-
-app.get("/myclasses/:email", async (req, res) => {
-  const email = req.params.email;
-
-  try {
-    const result = await myclasses.find({ email: email }).toArray();
+    const result = await userCollection.find({ role: "faculty" }).toArray();
 
     if (result.length > 0) {
-      res.status(200).send(result);
-    } else {
-      res.status(404).json({ message: "User not found" });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "An error occurred while retrieving the user" });
-  }
-});
-
-
-
-app.get("/myclass/:id", async (req, res) => {
-  const courseId = req.params.id;
-
-  try {
-    const result = await myclasses.findOne({ _id: new ObjectId(courseId) });
-
-    if (result) {
       res.status(200).json(result);
     } else {
-      res.status(404).json({ message: "Course not found" });
+      res.status(404).json({ message: "No users found with the role 'faculty'" });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "An error occurred while retrieving the course" });
+    res.status(500).json({ message: "An error occurred while retrieving the data" });
   }
 });
+
+/////
+///user start
 //////
-
-app.get("/users/:email", async (req, res) => {
-  const email = req.params.email;
-
-  try {
-    const result = await userCollection.findOne({ email: email });
-
-    if (result) {
-      res.status(200).json(result);
-    } else {
-      res.status(404).json({ message: "User not found" });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "An error occurred while retrieving the user" });
-  }
-});
-
-
 
     app.get("/users", async (req, res) => {
       const showuser = await userCollection.find().toArray();
       res.send(showuser);
     });
 
+    app.patch("/userall/:id", async (req, res) => {
+      const id = req.params.id;
+    const { role } = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+           role: role || "",
+        },
+      };
+      const result = await userCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
+
+
+
+    app.post('/users', async(req,res) => {
+        const user = req.body;
+        const query = {email: user.email};
+        const existingUser = await userCollection.findOne(query);
+        if(existingUser){
+            return res.send({message: 'User Already Exists'})
+        }
+        const result = await userCollection.insertOne(user);
+        res.send(result)
+    })
+
     app.get("/courses", async (req, res) => {
       const showuser = await course.find().toArray();
       res.send(showuser);
     });
+//app.put("/courses/:id", async (req, res) => {
+//  const courseId = req.params.id;
+//
+//  try {
+//    const result = await courses.updateOne(
+//      { _id: courseId },
+//      { $inc: { enroll: 1 } }
+//    );
+//
+//    if (result.modifiedCount > 0) {
+//      res.status(200).json({ message: "Course updated successfully" });
+//    } else {
+//      res.status(404).json({ message: "Course not found" });
+//    }
+//  } catch (error) {
+//    console.error(error);
+//    res.status(500).json({ message: "An error occurred while updating the course" });
+//  }
+//});
 
+ app.get("/course/:email", async (req, res) => {
+      const email = req.params.email;
+
+      try {
+        const result = await course.find({ email: email }).toArray();
+
+        if (result.length > 0) {
+          res.status(200).send(result);
+        } else {
+          res.status(404).json({ message: "User not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ message: "An error occurred while retrieving the user" });
+      }
+    });
     app.post("/courses", async (req, res) => {
       const additem = req.body;
 
@@ -252,29 +399,29 @@ app.get("/users/:email", async (req, res) => {
           .json({ message: "An error occurred while updating the course" });
       }
     });
-    app.put("/courses/:id", async (req, res) => {
-      const courseId = req.params.id;
-      const updateData = req.body;
-      delete updateData._id; // Exclude the _id field from the update
-
-      try {
-        const result = await course.updateOne(
-          { _id: new ObjectId(courseId) },
-          { $set: updateData },
-        );
-
-        if (result.modifiedCount === 1) {
-          res.status(200).json({ message: "Course updated successfully" });
-        } else {
-          res.status(404).json({ message: "Course not found" });
-        }
-      } catch (error) {
-        console.error(error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while updating the course" });
-      }
-    });
+//    app.put("/courses/:id", async (req, res) => {
+//      const courseId = req.params.id;
+//      const updateData = req.body;
+//      delete updateData._id; // Exclude the _id field from the update
+//
+//      try {
+//        const result = await course.updateOne(
+//          { _id: new ObjectId(courseId) },
+//          { $set: updateData },
+//        );
+//
+//        if (result.modifiedCount === 1) {
+//          res.status(200).json({ message: "Course updated successfully" });
+//        } else {
+//          res.status(404).json({ message: "Course not found" });
+//        }
+//      } catch (error) {
+//        console.error(error);
+//        res
+//          .status(500)
+//          .json({ message: "An error occurred while updating the course" });
+//      }
+//    });
     app.get("/courses/:id", async (req, res) => {
       const courseId = req.params.id;
 

@@ -56,60 +56,7 @@ async function run() {
       res.send({ token });
     });
 
-//    const verifyAdmin = async (req, res, next) => {
-//      const email = req.user.email;
-//      const query = { email: email };
-//      const user = await userCollection.findOne(query);
-//      if (user.role !== "admin") {
-//        return res
-//          .status(403)
-//          .send({ error: true, message: "Forbiddenn access" });
-//      }
-//      next();
-//    };
-//    const verifyfaculty = async (req, res, next) => {
-//      const email = req.user.email;
-//      const query = { email: email };
-//      const user = await userCollection.findOne(query);
-//      if (user.role !== "faculty") {
-//        return res
-//          .status(403)
-//          .send({ error: true, message: "Forbidden access" });
-//      }
-//      next();
-//    };
-
-    //user email all data
-
-//    //payment
-//    app.post("/stripe/charge", cors(), async (req, res) => {
-//      console.log("stripe-routes.js 9 | route reached", req.body);
-//      let { amount, id } = req.body;
-//      console.log("stripe-routes.js 10 | amount and id", amount, id);
-//      try {
-//        const payment = await stripe.paymentIntents.create({
-//          amount: amount,
-//          currency: "USD",
-//          description: "Your Company Description",
-//          payment_method: id,
-//          confirm: true,
-//        });
-//        console.log("stripe-routes.js 19 | payment", payment);
-//        res.json({
-//          message: "Payment Successful",
-//          success: true,
-//        });
-//      } catch (error) {
-//        console.log("stripe-routes.js 17 | error", error);
-//        res.json({
-//          message: "Payment Failed",
-//          success: false,
-//        });
-//      }
-//    });
-    /////////////////
-    //myclasses
-    app.post("/myclasses", async (req, res) => {
+    app.post("/myclassadd", async (req, res) => {
       const additem = req.body;
 
       try {
@@ -118,7 +65,7 @@ async function run() {
         });
 
         if (existingDocument) {
-          // Document with the same _id already exists
+  
           return res.status(409).send("This class has already been added.");
         }
 
@@ -200,34 +147,7 @@ async function run() {
       }
     });
 
-//    app.put("/myclass/:id", async (req, res) => {
-//      const courseId = req.params.id;
-//      const { payment } = req.body;
-//
-//      try {
-//        const result = await myclasses.updateOne(
-//          { _id: new ObjectId(courseId) },
-//          {
-//            $set: {
-//              payment: payment,
-//            },
-//          },
-//        );
-//
-//        if (result.modifiedCount === 1) {
-//          res
-//            .status(200)
-//            .json({ message: "Payment status updated successfully" });
-//        } else {
-//          res.status(404).json({ message: "Course not found" });
-//        }
-//      } catch (error) {
-//        console.error(error);
-//        res.status(500).json({
-//          message: "An error occurred while updating the payment status",
-//        });
-//      }
-//    });
+
 
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -245,6 +165,25 @@ async function run() {
         res
           .status(500)
           .json({ message: "An error occurred while retrieving the user" });
+      }
+    });
+
+   app.delete("/userdel/:id", async (req, res) => {
+      const courseId = req.params.id;
+
+      try {
+        const result = await userCollection.deleteOne({ _id: new ObjectId(courseId) });
+
+        if (result.deletedCount === 1) {
+          res.status(200).json({ message: "Course deleted successfully" });
+        } else {
+          res.status(404).json({ message: "Course not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ message: "An error occurred while deleting the course" });
       }
     });
 
@@ -266,9 +205,7 @@ app.get("/use/faculty", async (req, res) => {
   }
 });
 
-/////
-///user start
-//////
+
 
     app.get("/users", async (req, res) => {
       const showuser = await userCollection.find().toArray();
@@ -305,25 +242,7 @@ app.get("/use/faculty", async (req, res) => {
       const showuser = await course.find().toArray();
       res.send(showuser);
     });
-//app.put("/courses/:id", async (req, res) => {
-//  const courseId = req.params.id;
-//
-//  try {
-//    const result = await courses.updateOne(
-//      { _id: courseId },
-//      { $inc: { enroll: 1 } }
-//    );
-//
-//    if (result.modifiedCount > 0) {
-//      res.status(200).json({ message: "Course updated successfully" });
-//    } else {
-//      res.status(404).json({ message: "Course not found" });
-//    }
-//  } catch (error) {
-//    console.error(error);
-//    res.status(500).json({ message: "An error occurred while updating the course" });
-//  }
-//});
+
 
  app.get("/course/:email", async (req, res) => {
       const email = req.params.email;
@@ -343,7 +262,7 @@ app.get("/use/faculty", async (req, res) => {
           .json({ message: "An error occurred while retrieving the user" });
       }
     });
-    app.post("/courses", async (req, res) => {
+    app.post("/coursesadd", async (req, res) => {
       const additem = req.body;
 
       try {
@@ -376,13 +295,13 @@ app.get("/use/faculty", async (req, res) => {
     app.put("/courses/:id", async (req, res) => {
       const courseId = req.params.id;
       const updateData = req.body;
-      const { _id, ...updatedFields } = updateData; // Exclude _id from updatedFields
+      const { _id, ...updatedFields } = updateData; 
 
       try {
         const result = await course.findOneAndUpdate(
           { _id: new ObjectId(courseId) },
           { $set: updatedFields },
-          { returnOriginal: false }, // Return the updated document
+          { returnOriginal: false },
         );
 
         if (result) {
@@ -399,29 +318,29 @@ app.get("/use/faculty", async (req, res) => {
           .json({ message: "An error occurred while updating the course" });
       }
     });
-//    app.put("/courses/:id", async (req, res) => {
-//      const courseId = req.params.id;
-//      const updateData = req.body;
-//      delete updateData._id; // Exclude the _id field from the update
-//
-//      try {
-//        const result = await course.updateOne(
-//          { _id: new ObjectId(courseId) },
-//          { $set: updateData },
-//        );
-//
-//        if (result.modifiedCount === 1) {
-//          res.status(200).json({ message: "Course updated successfully" });
-//        } else {
-//          res.status(404).json({ message: "Course not found" });
-//        }
-//      } catch (error) {
-//        console.error(error);
-//        res
-//          .status(500)
-//          .json({ message: "An error occurred while updating the course" });
-//      }
-//    });
+    app.put("/courses/:id", async (req, res) => {
+      const courseId = req.params.id;
+      const updateData = req.body;
+      delete updateData._id; 
+
+      try {
+        const result = await course.updateOne(
+          { _id: new ObjectId(courseId) },
+          { $set: updateData },
+        );
+
+        if (result.modifiedCount === 1) {
+          res.status(200).json({ message: "Course updated successfully" });
+        } else {
+          res.status(404).json({ message: "Course not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res
+          .status(500)
+          .json({ message: "An error occurred while updating the course" });
+      }
+    });
     app.get("/courses/:id", async (req, res) => {
       const courseId = req.params.id;
 
